@@ -163,6 +163,7 @@ if (isset($_GET['carrinho_vazio']) && $_GET['carrinho_vazio'] == '1') {
                   </tr>";
             $total += $produto['preco'];
           }
+          $_SESSION['totalzao'] = $total; // varaivel de sessão pra armazenar o total da venda. Vou mandar ela como parâmetro da requisicao de pagamento.
         }
         ?>
       </tbody>

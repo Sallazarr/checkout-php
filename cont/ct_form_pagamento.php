@@ -4,6 +4,7 @@
  */
 
 require_once('../conf/conexao_db.php');
+require_once("api/paymentType.php");
 session_start();
 
 // Se tentar pagar com carrinho vazio, redireciona para a página de checkout onde será exibida uma mensagem de erro.
@@ -11,6 +12,12 @@ if (!isset($_SESSION['produtos']) || count($_SESSION['produtos']) == 0) {
     header("Location: ../view/vi_tab_produtos_checkout_html.php?carrinho_vazio=1");
     exit();
 }
+
+// Chama a função que vai validar o método de pagamento.
+if (isset($_POST['metodo_pagamento'])) {
+    paymentType($_POST['metodo_pagamento']);
+}
+
 
 // Validação se o verbo da requisição é post. Se sim, entra no bloco da lógica.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

@@ -92,15 +92,15 @@ if (!isset($_SESSION['usuario_logado'])) {
     <div class="metodos_pagamento">
       <h3>MÉTODOS DE PAGAMENTO</h3>
       <form action="../cont/ct_form_pagamento.php" method="post">
-        <input type="hidden" name="metodo_pagamento" value="Débito">
+        <input type="hidden" name="metodo_pagamento" value="debito">
         <button type="submit">1 - DÉBITO</button>
       </form>
       <form action="../cont/ct_form_pagamento.php" method="post">
-        <input type="hidden" name="metodo_pagamento" value="Crédito à vista">
+        <input type="hidden" name="metodo_pagamento" value="credito">
         <button type="submit">2 - CRÉDITO (vista)</button>
       </form>
       <form action="../cont/ct_form_pagamento.php" method="post">
-        <input type="hidden" name="metodo_pagamento" value="PIX">
+        <input type="hidden" name="metodo_pagamento" value="pix">
         <button type="submit">3 - PIX</button>
       </form>
     </div>
