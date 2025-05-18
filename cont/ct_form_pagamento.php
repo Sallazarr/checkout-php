@@ -18,14 +18,19 @@ if (!isset($_SESSION['produtos']) || count($_SESSION['produtos']) == 0) {
 
 // Chama a função que vai validar o método de pagamento.
 if (isset($_POST['metodo_pagamento'])) {
-    try {
-        if ($_POST['metodo_pagamento'] === "debito")
-            chamaTransacao($_SESSION['totalzao'], "DEBIT");
+    switch ($_POST['metodo_pagamento']) {
+        case $_POST['metodo_pagamento'] === 'debito':
+            chamaTransacao($_SESSION['totalzao'], 'CARD', "DEBIT");
+            break;
 
-        if ($_POST['metodo_pagamento'] === "credito")
-            chamaTransacao($_SESSION['totalzao'], "CREDIT");
-    } catch (Exception $e) {
-        echo "Erro:" . $e->getMessage();
+        case $_POST['metodo_pagamento'] === 'credito':
+            chamaTransacao($_SESSION['totalzao'], 'CARD', "CREDIT");
+
+        case $_POST['metodo_pagamento'] === 'pix':
+            chamaTransacao($_SESSION['totalzao'], "PIX", '');
+        default:
+            header("location:../view/retorno.php");
+            break;
     }
 }
 
