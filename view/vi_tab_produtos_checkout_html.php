@@ -118,6 +118,7 @@ if (isset($_GET['carrinho_vazio']) && $_GET['carrinho_vazio'] == '1') {
         <thead>
           <tr>
             <th>ID</th>
+            <th>Imagem</th>
             <th>Produto</th>
             <th>Preço Unitário</th>
           </tr>
@@ -130,6 +131,7 @@ if (isset($_GET['carrinho_vazio']) && $_GET['carrinho_vazio'] == '1') {
             echo "
                   <tr>
                     <td>{$produto['id']}</td>
+                    <td><img src='{$produto['imagem_path']}' alt='{$produto['produto']}' style='width: 50px; height: 50px; object-fit: cover;'></td>
                     <td>{$produto['produto']}</td>
                     <td>R$ " . number_format($produto['preco'], 2, ',', '.') . "</td>
                   </tr>";

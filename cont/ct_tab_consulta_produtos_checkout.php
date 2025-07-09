@@ -7,7 +7,7 @@ require_once('../conf/conexao_db.php');
 session_start();
 $_SESSION['todos_produtos'] = [];
 
-$resultado = $conexao->query("SELECT id, produto, preco FROM produtos ORDER BY id");
+$resultado = $conexao->query("SELECT id,imagem_path, produto, preco FROM produtos ORDER BY id");
 
 if ($resultado) {
   while ($produto = $resultado->fetch_assoc()) {

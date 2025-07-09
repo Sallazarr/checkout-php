@@ -100,6 +100,7 @@ if (isset($_GET['nova_senha'])) {
 <body>
   <div class="container">
     <form name="login" action="cont/ct_form_login.php" method="post">
+      <h1>VanPel</h1>
       <h2>FAÇA LOGIN</h2>
       <label for="email">E-mail:</label>
       <input name="email" type="email" id="email" required />

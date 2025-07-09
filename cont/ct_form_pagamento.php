@@ -25,7 +25,7 @@ if (isset($_POST['metodo_pagamento'])) {
 
         case $_POST['metodo_pagamento'] === 'credito':
             chamaTransacao($_SESSION['totalzao'], 'CARD', "CREDIT");
-
+      break;
         case $_POST['metodo_pagamento'] === 'pix':
             chamaTransacao($_SESSION['totalzao'], "PIX", '');
         default:
