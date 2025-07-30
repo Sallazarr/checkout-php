@@ -1,39 +1,63 @@
 <?php
 /**
- * Script para cadastro dos produtos no banco de dados. Além de cadastrar, ele também
- * atualiza a quantidade do produto se ele ja existir na base.
+ * Cadastra novo produto OU soma quantidade se o nome já existir (produto UNIQUE).
  */
-if (!isset($_SESSION)) {
-    session_start();
-}
+if (!isset($_SESSION)) { session_start(); }
 if (!isset($_SESSION['usuario_logado'])) {
-    header('location:index.php');
+    header('Location: ../view/index.php');
+    exit();
 }
 
-$produto = $_POST['produto'];
-$quantidade = (int) $_POST['qtd'];
-$preco = $_POST['preco'];
-
-// verifica no banco se existe registro do produto.
 require_once('../conf/conexao_db.php');
-$verificacao = $conexao->query("SELECT * FROM produtos WHERE produto='$produto'");
 
-/**
- * Se houver o produto na base, ele soma a quantidade do produto. Se não houver,
- * cria o produto. Se a quantidade for menor que 1, ele retorna para o formulário.
- */
-if ($quantidade > 0) {
-    if ($verificacao->num_rows > 0) {
-        $conexao->query("UPDATE produtos SET quantidade=quantidade + $quantidade WHERE produto='$produto'");
-        header('location:../view/vi_form_cadastro_produtos_html.php?produto_atualizado=1');
+$produto      = trim($_POST['produto'] ?? '');
+$quantidade   = (int)($_POST['qtd'] ?? 0);
+$precoRaw     = trim($_POST['preco'] ?? '0');
+$descricao    = trim($_POST['descricao'] ?? '');
+$imagem_path  = trim($_POST['imagem_path'] ?? '');
+
+/* Normaliza preço "1.234,56" -> 1234.56 */
+$preco = (float)str_replace(',', '.', preg_replace('/\./', '', $precoRaw));
+
+if ($quantidade <= 0 || $preco < 0 || $produto === '') {
+    header('Location: ../view/vi_form_cadastro_produtos_html.php?qtd_invalida=1');
+    exit();
+}
+
+/* Verifica existência pelo nome (coluna produto é UNIQUE) */
+$check = $conexao->prepare("SELECT id FROM produtos WHERE produto = ?");
+$check->bind_param('s', $produto);
+$check->execute();
+$checkRes = $check->get_result();
+
+if ($checkRes->num_rows > 0) {
+    /* Já existe: soma quantidade (mantém demais campos) */
+    $upd = $conexao->prepare("UPDATE produtos SET quantidade = quantidade + ? WHERE produto = ?");
+    $upd->bind_param('is', $quantidade, $produto);
+    $ok = $upd->execute();
+    $upd->close();
+    $check->close();
+
+    if ($ok) {
+        header('Location: ../view/vi_form_cadastro_produtos_html.php?produto_atualizado=1');
         exit();
     } else {
-        $conexao->query("INSERT INTO produtos (produto, quantidade, preco) VALUES ('$produto', '$quantidade', '$preco')");
-        header('location:../view/vi_form_cadastro_produtos_html.php?produto_atualizado=0');
+        header('Location: ../view/vi_form_cadastro_produtos_html.php?erro=update');
         exit();
     }
 } else {
-    header('location:../view/vi_form_cadastro_produtos_html.php?qtd_invalida=0');
-    exit();
+    /* Novo produto: insere completo */
+    $ins = $conexao->prepare("INSERT INTO produtos (produto, preco, quantidade, imagem_path, descricao) VALUES (?, ?, ?, ?, ?)");
+    $ins->bind_param('sdiss', $produto, $preco, $quantidade, $imagem_path, $descricao);
+    $ok = $ins->execute();
+    $ins->close();
+    $check->close();
+
+    if ($ok) {
+        header('Location: ../view/vi_form_cadastro_produtos_html.php?produto_atualizado=0');
+        exit();
+    } else {
+        header('Location: ../view/vi_form_cadastro_produtos_html.php?erro=insert');
+        exit();
+    }
 }
-?>

@@ -6,15 +6,19 @@ if (!isset($_SESSION)) {
 
 if (!isset($_SESSION['usuario_logado'])) {
   header("Location: index.php");
-}
-
-// Aciona o script que busca todos os produtos no banco.
-if (!isset($_SESSION["todos_produtos"])) {
-  header('Location: ../cont/ct_tab_consulta_produtos_checkout.php');
   exit();
 }
 
-// Exibe alerta se for tentado finalizar uma venda com carrinho vazio.
+/* Carrega SEMPRE os produtos do banco (opção 2) */
+require_once('../conf/conexao_db.php');
+$result = $conexao->query("SELECT * FROM produtos ORDER BY id");
+$_SESSION['todos_produtos'] = [];
+while ($row = $result->fetch_assoc()) {
+  $_SESSION['todos_produtos'][] = $row;
+}
+$conexao->close();
+
+/* Alerta carrinho vazio */
 if (isset($_GET['carrinho_vazio']) && $_GET['carrinho_vazio'] == '1') {
   echo "<script>alert('Carrinho vazio! Adicione produtos antes de finalizar.');</script>";
 }
@@ -34,7 +38,6 @@ if (isset($_GET['carrinho_vazio']) && $_GET['carrinho_vazio'] == '1') {
       justify-content: center;
       align-items: center;
       height: 100%;
-      /*até eu descobrir que esse era o problema das tabelas não estarem cabendo na página... :( */
       background-color: #f4f4f4;
     }
 
@@ -53,8 +56,7 @@ if (isset($_GET['carrinho_vazio']) && $_GET['carrinho_vazio'] == '1') {
       margin-bottom: 20px;
     }
 
-    th,
-    td {
+    th, td {
       border: 1px solid #ddd;
       padding: 8px;
       text-align: center;
@@ -95,8 +97,6 @@ if (isset($_GET['carrinho_vazio']) && $_GET['carrinho_vazio'] == '1') {
       background-color: #65e62a;
     }
 
-    /* CATEI NA INTERNET COMO FAZER ESSE ESITLO.
-       O BLOCO ABAIXO É ESTILIZAÇÃO DA TABELA QUE MOSTRAOS PRODUTOS NA TELA PARA O OPERADOR.*/
     .produtos-container {
       max-height: 300px;
       overflow-y: auto;
@@ -104,16 +104,64 @@ if (isset($_GET['carrinho_vazio']) && $_GET['carrinho_vazio'] == '1') {
       border: 1px solid #ddd;
       border-radius: 4px;
     }
+
+    /* MODAL */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      padding-top: 60px;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 60%;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover { color: #000; }
   </style>
 </head>
 
+<script>
+  function abrirModal(id) {
+    document.getElementById('modal-' + id).style.display = 'block';
+  }
+
+  function fecharModal(id) {
+    document.getElementById('modal-' + id).style.display = 'none';
+  }
+
+  window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+      event.target.style.display = "none";
+    }
+  }
+</script>
+
 <body>
   <div class="container">
-    <h2>FARMACIA ZULU - PDV Mauricio 1.0 BETA</h2>
+    <h2>FARMACIA VanPel - PDV</h2>
     <div class="produtos-container">
       <h3>Produtos (ID Referência)</h3>
 
-      <!-- Tabela que mostra os produtos na tela para consulta do operador. -->
       <table>
         <thead>
           <tr>
@@ -121,27 +169,44 @@ if (isset($_GET['carrinho_vazio']) && $_GET['carrinho_vazio'] == '1') {
             <th>Imagem</th>
             <th>Produto</th>
             <th>Preço Unitário</th>
+            <th>Saiba Mais</th>
+            <th>Editar</th>
           </tr>
         </thead>
         <tbody>
-          <!-- Cria a tabela na tela com todos os produtos que foram passados para a variavel de sessão
-           em 'ct_tab_consulta_produtos_checkout.php'. -->
           <?php
           foreach ($_SESSION['todos_produtos'] as $produto) {
+            $id = (int)$produto['id'];
+            $nome = htmlspecialchars($produto['produto'] ?? '', ENT_QUOTES | ENT_HTML5);
+            $img = htmlspecialchars($produto['imagem_path'] ?? '', ENT_QUOTES | ENT_HTML5);
+            $preco = number_format((float)$produto['preco'], 2, ',', '.');
+            $descricao = htmlspecialchars($produto['descricao'] ?? 'Sem descrição disponível', ENT_QUOTES | ENT_HTML5);
+
             echo "
-                  <tr>
-                    <td>{$produto['id']}</td>
-                    <td><img src='{$produto['imagem_path']}' alt='{$produto['produto']}' style='width: 50px; height: 50px; object-fit: cover;'></td>
-                    <td>{$produto['produto']}</td>
-                    <td>R$ " . number_format($produto['preco'], 2, ',', '.') . "</td>
-                  </tr>";
+              <tr>
+                <td>{$id}</td>
+                <td><img src='{$img}' alt='{$nome}' style='width: 50px; height: 50px; object-fit: cover;'></td>
+                <td>{$nome}</td>
+                <td>R$ {$preco}</td>
+                <td><button onclick=\"abrirModal('{$id}')\">Saiba mais</button></td>
+                <td><a href='vi_form_editar_produtos_html.php?id={$id}'>Editar</a></td>
+              </tr>
+
+              <div id='modal-{$id}' class='modal'>
+                <div class='modal-content'>
+                  <span class='close' onclick=\"fecharModal('{$id}')\">&times;</span>
+                  <h3>{$nome}</h3>
+                  <p>{$descricao}</p>
+                </div>
+              </div>
+            ";
           }
           ?>
         </tbody>
       </table>
     </div>
 
-    <!-- tabela que vai receber os produtos que estão sendo adicionados no carrinho. -->
+    <!-- Carrinho -->
     <table>
       <thead>
         <tr>
@@ -151,53 +216,55 @@ if (isset($_GET['carrinho_vazio']) && $_GET['carrinho_vazio'] == '1') {
         </tr>
       </thead>
       <tbody>
-        <!-- Lógica pra inserir os produtos na tabela (carrinho), e guardar a soma do valor total. -->
         <?php
         $total = 0;
-
         if (isset($_SESSION['produtos'])) {
-          foreach ($_SESSION['produtos'] as $produto) {
+          foreach ($_SESSION['produtos'] as $p) {
+            $pid = (int)$p['id'];
+            $pnome = htmlspecialchars($p['produto'] ?? '', ENT_QUOTES | ENT_HTML5);
+            $ppreco = (float)$p['preco'];
             echo "
-                  <tr>
-                      <td>{$produto['id']}</td>
-                      <td>{$produto['produto']}</td>
-                      <td>R$ " . number_format($produto['preco'], 2, ',', '.') . "</td>
-                  </tr>";
-            $total += $produto['preco'];
+              <tr>
+                <td>{$pid}</td>
+                <td>{$pnome}</td>
+                <td>R$ " . number_format($ppreco, 2, ',', '.') . "</td>
+              </tr>
+            ";
+            $total += $ppreco;
           }
-          $_SESSION['totalzao'] = $total; // varaivel de sessão pra armazenar o total da venda. Vou mandar ela como parâmetro da requisicao de pagamento.
+          $_SESSION['totalzao'] = $total;
         }
         ?>
       </tbody>
     </table>
 
-    <!-- Botão pra buscar o produto no banco pelo ID. -->
+    <!-- Adicionar por ID -->
     <form action="../cont/ct_tab_produtos_checkout.php" id="form" method="post">
       <label for="id">ID:</label>
       <input type="number" id="id" name="id" required />
       <button type="submit" id="adicionar">Adicionar</button>
     </form>
 
-    <!--mostrar o valor total dos produtos-->
+    <!-- Total -->
     <div id="total">
       TOTAL: R$ <?php echo number_format($total, 2, ',', '.'); ?>
     </div>
 
-    <!-- Botão pra enviar o valor total para página de pagamento. -->
+    <!-- Pagamento -->
     <form action="../view/vi_form_pagamento_html.php" method="post">
       <input type="hidden" name="total" value="<?php echo $total; ?>">
       <button id="pagar" type="submit">Finalizar</button>
     </form>
 
-    <!-- Botão de logoff -->
+    <!-- Logoff -->
     <form action="../cont/ct_logout.php" method="post">
       <button type="submit" id="logout">Logoff</button>
     </form>
 
+    <!-- Cadastro -->
     <form action="vi_form_cadastro_produtos_html.php" method="post">
       <button type="submit" id="cadastro_produtos">Cadastrar produtos</button>
     </form>
   </div>
 </body>
-
 </html>
