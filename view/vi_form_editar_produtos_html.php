@@ -45,12 +45,15 @@ function e($v){ return htmlspecialchars($v ?? '', ENT_QUOTES | ENT_HTML5); }
     button:hover { background:#52b41b; }
     .secondary { background:#d9dfe6; color:#000; }
     .actions { display:flex; gap:10px; }
+    .danger { background:#e63946; color:white; }
+    .danger:hover { background:#b91d2a; }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Editar Produto - ID <?= e($produto['id']) ?></h2>
 
+  
     <form action="../cont/ct_form_editar_produtos.php" method="post">
       <input type="hidden" name="id" value="<?= e($produto['id']) ?>" />
 
@@ -80,6 +83,12 @@ function e($v){ return htmlspecialchars($v ?? '', ENT_QUOTES | ENT_HTML5); }
             Voltar
         </a>
       </div>
+    </form>
+
+  
+    <form action="../cont/ct_form_deletar_produto.php" method="post" onsubmit="return confirm('Tem certeza que deseja deletar este produto? Esta ação não poderá ser desfeita.');">
+        <input type="hidden" name="id" value="<?= e($produto['id']) ?>">
+        <button type="submit" class="danger" style="width:100%;">Deletar Produto</button>
     </form>
   </div>
 </body>
